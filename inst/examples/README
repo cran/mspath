@@ -1,0 +1,54 @@
+These files illustrate how to use the distributed calculator.  Many of
+them were used in developing and testing the package.
+
+You may need to edit the paths in these files to get them to work for you.
+You should copy the files to your top-level mspath directory.
+
+Using these packages requires additional software beyond that listed
+as a dependency of the package.  Distributed calculations require the
+Rmpi and snow R packages, as well as a distributed processing
+infrastructure (e.g., a cluster and LAM/MPI software).  You will also
+need access to the src/simulate directory of the source distribution,
+and running some of the code there requires the msm R package.
+
+Basic Distributed Use
+=====================
+This works for LAM/MPI.
+1. Set up you MPI environment (e.g., lamboot).
+2. ln -s mspathProfile .Rprofile
+.Rprofile should be in your current directory or your home directory.
+3. mpirun C RMPIInteractive
+
+This will leave you at the R prompt in the master session, able to
+perform distributed calculations.
+The system will be shut down automatically when you exist that
+session.
+
+See tests/test5.R for some code to run in the master session.
+
+SNOW Use
+========
+1. Set up your MPI environment.
+2. mpirun C RMPISNOW
+The RMPISNOW script invokes RMPISNOWprofile in the R sessions that
+start.
+
+This leaves you at the R prompt, able to execute SNOW commands.
+You can NOT use the mspath distributed calculator, but you can
+distribute work across the machines.  For example, one can repeatedly
+simulate data and fit the model to it (see randomRun in
+simulate/makeData.R).
+
+We used this to examine the distribution of fitted coefficients across
+many simulations of the data with a known model.
+
+
+OTHER
+=====
+loadmspath.R is invoked in both previous scenarios, and is also handy
+for standalone development and debugging.  If you change the R code,
+it will reload the new code.  It also loads some of the R simulation
+code in src/simulate.
+
+checkAgainstMSM.R compares results from mspath and a nearly equivalent
+msm model.

@@ -1,0 +1,32 @@
+# mspathProfile
+# Start up processing for distributed mspathCalculator.
+# Make .Rprofile a symlink to this file.
+# master process will be ready for interactive input after this
+
+library(Rmpi)
+
+# I'm not sure the next line suffices to setup rsprng.
+library(rsprng)
+
+.First.sys()
+
+source("loadmspath.R")
+# alternately, use
+# library(mspath)
+# and load data
+
+.MPIrun <- function() 
+{
+    if (mpi.comm.rank(0) > 0){
+       slave(0)
+    }
+    else {
+        .Last <<- function(){
+            alldone(0)
+	 }
+   }
+}
+
+# mspathDistributedCalculator defines slave and alldone
+
+.MPIrun()

@@ -1,0 +1,38 @@
+*** THE FIRST THING TO DO when you get this package is to run 
+   ./configure  from this directory ******
+Little will work until you do so.
+
+Under Apple OS-X you will probably need to modify src/Makefile.full to
+add the option permitting multiply defined symbols:
+export LDFLAGS += -Wl,-m
+
+Please see src/README, and note that if you want to run make you
+should be in the src/ directory.
+
+Although this distribution includes files used to generate configure,
+it is not necessary to do so.  You do not need any of the GNU
+autotools; you should use the libtool that the configure script
+generates.
+
+If your system changes you should rerun configure and any steps you
+took thereafter.
+
+This R package depends on the methods package because it uses the new
+(aka S4) classes; it also uses the old (S3) classes and methods.  It
+depends on the stats package because it uses one of that classes print
+methods in printing coefficients.  Both packages are part of standard
+R.
+
+The code uses lexical scoping in several spots, and so will not run
+under S without modification.
+
+Read "Writing R Extensions" for more information on R packages.
+
+inst/doc/mspath-program.*
+	    Literate programming documentation on the C++ code and the
+	    underlying analytic approach.
+	    src/trueSrc/mspath.web is the source of the document as
+	    well as the C++ code.
+
+inst/examples/ Scripts and code for distributed calculation
+	       and development.  See inst/examples/README.

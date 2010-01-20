@@ -1,0 +1,764 @@
+
+R version 2.5.1 (2007-06-27)
+Copyright (C) 2007 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library("mspath")
+> 
+> permissible <- matrix(c(0, 1, 0, 0), nrow=2)
+> covConstraint <- c(1, 2)
+> baseConstraint <- c(1)
+> covNames <- c("a", "b")
+> estimate <- c(3, 4, 5.0)
+> pathNames <- c("TIS", "TSO")
+> pathConstraint <- seq(2)
+> 
+> # blow up with NULL pathVars?
+> mspathCoefficients(permissible, constrVec=covConstraint,
++                         baseConstrVec=baseConstraint,
++                         covVars=covNames,
++                         params=estimate,
++                         offset=0)
+intercept 
+     Index Value
+2->1     1     3
+
+a 
+     Index Value
+2->1     2     4
+
+b 
+     Index Value
+2->1     3     5
+
+> 
+> # blow up with NULL covariates?
+> mspathCoefficients(permissible,
++                    params=c(-1, 35, 3),
++                    offset=0,
++                    baseConstrVec=baseConstraint,
++                    pathVars = pathNames,
++                    pathConstrVec = pathConstraint)
+intercept 
+     Index Value
+2->1     1    -1
+
+TIS 
+     Index Value
+2->1     2    35
+
+TSO 
+     Index Value
+2->1     3     3
+
+> 
+> 
+> # blow up with both NULL?
+> mspathCoefficients(permissible,
++                    params=c(-3),
++                    offset=0,
++                    baseConstrVec=baseConstraint
++                    )
+intercept 
+     Index Value
+2->1     1    -3
+
+> 
+> # works with everything?
+> mspathCoefficients(permissible,
++                    params=c(.05, .1, .2, .3, .4),
++                    offset=0,
++                    baseConstrVec=baseConstraint,
++                    covVars=covNames,
++                    constrVec=covConstraint,
++                    pathVars = pathNames,
++                    pathConstrVec = pathConstraint
++                    )
+intercept 
+     Index Value
+2->1     1  0.05
+
+a 
+     Index Value
+2->1     2   0.1
+
+b 
+     Index Value
+2->1     3   0.2
+
+TIS 
+     Index Value
+2->1     4   0.3
+
+TSO 
+     Index Value
+2->1     5   0.4
+
+> 
+> # in real life, we may have error coefficient estimates too
+> # so this should produce same result as above, despite
+> # having extra parameters on the end
+> mspathCoefficients(permissible,
++                    params=c(.05, .1, .2, .3, .4, 1, 2, 3, 4, 5, 6, 7),
++                    offset=0,
++                    baseConstrVec=baseConstraint,
++                    covVars=covNames,
++                    constrVec=covConstraint,
++                    pathVars = pathNames,
++                    pathConstrVec = pathConstraint
++                    )
+intercept 
+     Index Value
+2->1     1  0.05
+
+a 
+     Index Value
+2->1     2   0.1
+
+b 
+     Index Value
+2->1     3   0.2
+
+TIS 
+     Index Value
+2->1     4   0.3
+
+TSO 
+     Index Value
+2->1     5   0.4
+
+> 
+> # stick one at front, again should be same
+> # tests offset
+> mspathCoefficients(permissible,
++                    params=c(7, .05, .1, .2, .3, .4, 1, 2, 3, 4, 5, 6),
++                    offset=1,
++                    baseConstrVec=baseConstraint,
++                    covVars=covNames,
++                    constrVec=covConstraint,
++                    pathVars = pathNames,
++                    pathConstrVec = pathConstraint
++                    )
+intercept 
+     Index Value
+2->1     2  0.05
+
+a 
+     Index Value
+2->1     3   0.1
+
+b 
+     Index Value
+2->1     4   0.2
+
+TIS 
+     Index Value
+2->1     5   0.3
+
+TSO 
+     Index Value
+2->1     6   0.4
+
+> 
+> 
+> ####### more challenging example with offsets
+> 
+> # 3x3, just up transitions
+> permissible <- matrix(0, nrow=3, ncol=3)
+> permissible <- row(permissible)+1 == col(permissible)
+> covConstraint <- seq(4)
+> covConstraint[4] <- 2
+> pathConstraint <- c(1, 1, 2, 3)
+> c <- mspathCoefficients(permissible,
++                    params=seq(from=.1, by=.1, len=18),
++                    offset=10,
++                    baseConstrVec=seq(2),
++                    covVars=covNames,
++                    constrVec=covConstraint,
++                    pathVars=pathNames,
++                    pathConstrVec=pathConstraint
++                    )
+> all.equal(coef(c), seq(from=1.1, by=.1, len=8))
+[1] TRUE
+> all.equal(sd(c), rep(0, 8))
+[1] TRUE
+> matrixCoef(c)
+$intercept
+        Stage 1 Stage 2 Stage 3
+Stage 1       0     1.1     0.0
+Stage 2       0     0.0     1.2
+Stage 3       0     0.0     0.0
+
+$a
+        Stage 1 Stage 2 Stage 3
+Stage 1       0     1.3     0.0
+Stage 2       0     0.0     1.4
+Stage 3       0     0.0     0.0
+
+$b
+        Stage 1 Stage 2 Stage 3
+Stage 1       0     1.5     0.0
+Stage 2       0     0.0     1.4
+Stage 3       0     0.0     0.0
+
+$TIS
+        Stage 1 Stage 2 Stage 3
+Stage 1       0     1.6     0.0
+Stage 2       0     0.0     1.6
+Stage 3       0     0.0     0.0
+
+$TSO
+        Stage 1 Stage 2 Stage 3
+Stage 1       0     1.7     0.0
+Stage 2       0     0.0     1.8
+Stage 3       0     0.0     0.0
+
+>           
+> # the next 3 should produce identical output
+> c
+intercept 
+     Index Value
+1->2    11   1.1
+2->3    12   1.2
+
+a 
+     Index Value
+1->2    13   1.3
+2->3    14   1.4
+
+b 
+     Index Value
+2->3    14   1.4
+1->2    15   1.5
+
+TIS 
+          Index Value
+1->2 2->3    16   1.6
+
+TSO 
+     Index Value
+1->2    17   1.7
+2->3    18   1.8
+
+> show(c)
+intercept 
+     Index Value
+1->2    11   1.1
+2->3    12   1.2
+
+a 
+     Index Value
+1->2    13   1.3
+2->3    14   1.4
+
+b 
+     Index Value
+2->3    14   1.4
+1->2    15   1.5
+
+TIS 
+          Index Value
+1->2 2->3    16   1.6
+
+TSO 
+     Index Value
+1->2    17   1.7
+2->3    18   1.8
+
+> print(c)
+intercept 
+     Index Value
+1->2    11   1.1
+2->3    12   1.2
+
+a 
+     Index Value
+1->2    13   1.3
+2->3    14   1.4
+
+b 
+     Index Value
+2->3    14   1.4
+1->2    15   1.5
+
+TIS 
+          Index Value
+1->2 2->3    16   1.6
+
+TSO 
+     Index Value
+1->2    17   1.7
+2->3    18   1.8
+
+> 
+> # print only 1 coefficient of interest
+> print(c, coeff="a")
+a 
+     Index Value
+1->2    13   1.3
+2->3    14   1.4
+
+> 
+> # and see if this give us all but intercept
+> print(c, coeff=covNames)
+a 
+     Index Value
+1->2    13   1.3
+2->3    14   1.4
+
+b 
+     Index Value
+2->3    14   1.4
+1->2    15   1.5
+
+> 
+> # check it doesn't blow up if some arguments are passed to lower level print
+> # digits=3 does nothing when there are only 2 digits
+> print(c, coeff="b", digits=3)
+b 
+     Index Value
+2->3    14   1.4
+1->2    15   1.5
+
+> 
+> # next should be TRUE
+> isAllFixed(c)
+[1] TRUE
+> 
+> 
+> ###### 5 x 5, history but no covariates
+> permissible <- matrix(c( 0, 1, 1, 0, 1,
++                          1, 0, 1, 1, 1,
++                          0, 0, 0, 0, 1,
++                          1, 0, 0, 0, 1,
++                          0, 0, 0, 0, 0), ncol=5, byrow=TRUE)
+> pathConstraint <- c(1, 1, 2, 3, 1, 1, 4, 5, 2, 6,
++                    7, 8, 2,  8, 7, 8, 9, 10, 11, 12)
+> baseConstraint <- c(1, 1, 2, 3, 1, 1, 4, 5, 2, 6)
+> c <- mspathCoefficients(permissible,
++                         params= 101:118,
++                         baseConstrVec=baseConstraint,
++                         pathVars=pathNames,
++                         pathConstrVec = pathConstraint)
+> c
+intercept 
+                    Index Value
+1->2 1->3 2->3 2->4     1   101
+1->5 4->1               2   102
+2->1                    3   103
+2->5                    4   104
+3->5                    5   105
+4->5                    6   106
+
+TIS 
+                    Index Value
+1->2 1->3 2->3 2->4     7   107
+1->5 4->1               8   108
+2->1                    9   109
+2->5                   10   110
+3->5                   11   111
+4->5                   12   112
+
+TSO 
+               Index Value
+1->5               8   108
+1->2 2->3         13   113
+1->3 2->1 2->4    14   114
+2->5              15   115
+3->5              16   116
+4->1              17   117
+4->5              18   118
+
+> matrixCoef(c, coeff=c("intercept"))
+$intercept
+        Stage 1 Stage 2 Stage 3 Stage 4 Stage 5
+Stage 1       0     101     101       0     102
+Stage 2     103       0     101     101     104
+Stage 3       0       0       0       0     105
+Stage 4     102       0       0       0     106
+Stage 5       0       0       0       0       0
+
+> print(c, coeff=c("TSO"), digits=3)
+TSO 
+               Index Value
+1->5               8   108
+1->2 2->3         13   113
+1->3 2->1 2->4    14   114
+2->5              15   115
+3->5              16   116
+4->1              17   117
+4->5              18   118
+
+> 
+> isAllFixed(c) # TRUE
+[1] TRUE
+> 
+> ##### test estimated coefficients
+> fixed <- c(3, 10, 11)
+> var <- seq(from=30, by=5, length.out=15)^2
+> c <- mspathEstimatedCoefficients(permissible,
++                                  params= 101:118,
++                                  baseConstrVec=baseConstraint,
++                                  pathVars=pathNames,
++                                  pathConstrVec = pathConstraint,
++                                  fixed=fixed,
++                                  n=50,
++                                  var=var)
+> all.equal(coef(c), 101:118)
+[1] TRUE
+> allsd <- rep(0, 18)
+> allsd[setdiff(1:18, fixed)] <- sqrt(var)
+> all.equal(sd(c), allsd)
+[1] TRUE
+> 
+> # test default show method
+> c
+intercept 
+                    Index Estimate Std Err      t Pr(>|t|)   
+1->2 1->3 2->3 2->4     1      101      30 3.3667 0.001860 **
+1->5 4->1               2      102      35 2.9143 0.006177 **
+2->1                   -3      103      NA     NA       NA   
+2->5                    4      104      40 2.6000 0.013562 * 
+3->5                    5      105      45 2.3333 0.025502 * 
+4->5                    6      106      50 2.1200 0.041170 * 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+TIS 
+                    Index Estimate Std Err      t Pr(>|t|)  
+1->2 1->3 2->3 2->4     7      107      55 1.9455  0.05979 .
+1->5 4->1               8      108      60 1.8000  0.08049 .
+2->1                    9      109      65 1.6769  0.10247  
+2->5                  -10      110      NA     NA       NA  
+3->5                  -11      111      NA     NA       NA  
+4->5                   12      112      70 1.6000  0.11859  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+TSO 
+               Index Estimate Std Err      t Pr(>|t|)  
+1->5               8      108      60 1.8000  0.08049 .
+1->2 2->3         13      113      75 1.5067  0.14087  
+1->3 2->1 2->4    14      114      80 1.4250  0.16301  
+2->5              15      115      85 1.3529  0.18475  
+3->5              16      116      90 1.2889  0.20589  
+4->1              17      117      95 1.2316  0.22632  
+4->5              18      118     100 1.1800  0.24596  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+> isAllFixed(c) # FALSE
+[1] FALSE
+> 
+> print(c, coeff=c("intercept", "TIS"), digits=2)
+intercept 
+                    Index Estimate Std Err   t Pr(>|t|)   
+1->2 1->3 2->3 2->4     1      101      30 3.4    0.002 **
+1->5 4->1               2      102      35 2.9    0.006 **
+2->1                   -3      103      NA  NA       NA   
+2->5                    4      104      40 2.6    0.014 * 
+3->5                    5      105      45 2.3    0.026 * 
+4->5                    6      106      50 2.1    0.041 * 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+TIS 
+                    Index Estimate Std Err   t Pr(>|t|)  
+1->2 1->3 2->3 2->4     7      107      55 1.9     0.06 .
+1->5 4->1               8      108      60 1.8     0.08 .
+2->1                    9      109      65 1.7     0.10  
+2->5                  -10      110      NA  NA       NA  
+3->5                  -11      111      NA  NA       NA  
+4->5                   12      112      70 1.6     0.12  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+> 
+> ## add extra values, reflecting a presumed estimation of
+> # transition and error probabilities.
+> # Results should be almost same as above, except fewer df.
+> var2 <- seq(from=30, by=5, length.out=25)^2
+> c <- mspathEstimatedCoefficients(permissible,
++                                  params= 101:125,
++                                  baseConstrVec=baseConstraint,
++                                  pathVars=pathNames,
++                                  pathConstrVec = pathConstraint,
++                                  fixed=fixed,
++                                  n=50,
++                                  var=var2)
+> c
+intercept 
+                    Index Estimate Std Err      t Pr(>|t|)   
+1->2 1->3 2->3 2->4     1      101      30 3.3667 0.002226 **
+1->5 4->1               2      102      35 2.9143 0.006936 **
+2->1                   -3      103      NA     NA       NA   
+2->5                    4      104      40 2.6000 0.014716 * 
+3->5                    5      105      45 2.3333 0.027038 * 
+4->5                    6      106      50 2.1200 0.043002 * 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+TIS 
+                    Index Estimate Std Err      t Pr(>|t|)  
+1->2 1->3 2->3 2->4     7      107      55 1.9455  0.06182 .
+1->5 4->1               8      108      60 1.8000  0.08264 .
+2->1                    9      109      65 1.6769  0.10469  
+2->5                  -10      110      NA     NA       NA  
+3->5                  -11      111      NA     NA       NA  
+4->5                   12      112      70 1.6000  0.12082  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+TSO 
+               Index Estimate Std Err      t Pr(>|t|)  
+1->5               8      108      60 1.8000  0.08264 .
+1->2 2->3         13      113      75 1.5067  0.14310  
+1->3 2->1 2->4    14      114      80 1.4250  0.16521  
+2->5              15      115      85 1.3529  0.18690  
+3->5              16      116      90 1.2889  0.20798  
+4->1              17      117      95 1.2316  0.22835  
+4->5              18      118     100 1.1800  0.24793  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+> 
+> # same deal, but as if a whole earlier coefficient were estimated
+> # There are some fixed values in the earlier coefficient, so it
+> # has 10 parameters, 8 of which are free.
+> # same output as above, except indices are offset and different df
+> var3 <- c(seq(10, by=5, length=8), seq(from=30, by=5, length.out=18))^2
+> c <- mspathEstimatedCoefficients(permissible,
++                                  params= c(seq(10)+20, 101:118),
++                                  baseConstrVec=baseConstraint,
++                                  pathVars=pathNames,
++                                  pathConstrVec = pathConstraint,
++                                  fixed=c(4, 8, fixed+10),
++                                  n=50,
++                                  offset=10,
++                                  var=var3)
+> print(c, digits=3)
+intercept 
+                    Index Estimate Std Err    t Pr(>|t|)   
+1->2 1->3 2->3 2->4    11      101      30 3.37   0.0023 **
+1->5 4->1              12      102      35 2.91   0.0071 **
+2->1                  -13      103      NA   NA       NA   
+2->5                   14      104      40 2.60   0.0149 * 
+3->5                   15      105      45 2.33   0.0273 * 
+4->5                   16      106      50 2.12   0.0433 * 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+TIS 
+                    Index Estimate Std Err    t Pr(>|t|)  
+1->2 1->3 2->3 2->4    17      107      55 1.95    0.062 .
+1->5 4->1              18      108      60 1.80    0.083 .
+2->1                   19      109      65 1.68    0.105  
+2->5                  -20      110      NA   NA       NA  
+3->5                  -21      111      NA   NA       NA  
+4->5                   22      112      70 1.60    0.121  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+TSO 
+               Index Estimate Std Err    t Pr(>|t|)  
+1->5              18      108      60 1.80    0.083 .
+1->2 2->3         23      113      75 1.51    0.144  
+1->3 2->1 2->4    24      114      80 1.43    0.166  
+2->5              25      115      85 1.35    0.187  
+3->5              26      116      90 1.29    0.208  
+4->1              27      117      95 1.23    0.229  
+4->5              28      118     100 1.18    0.248  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+> 
+> 
+> #### "estimated" case in which all are fixed
+> fixed <- seq(18)
+> # however, there are additional params, not involved in this
+> # coefficient.  This was confusing isAllFixed
+> c <- mspathEstimatedCoefficients(permissible,
++                                  params= 101:120,
++                                  baseConstrVec=baseConstraint,
++                                  pathVars=pathNames,
++                                  pathConstrVec = pathConstraint,
++                                  fixed=fixed,
++                                  n=50)
+> c
+intercept 
+                    Index Estimate
+1->2 1->3 2->3 2->4    -1      101
+1->5 4->1              -2      102
+2->1                   -3      103
+2->5                   -4      104
+3->5                   -5      105
+4->5                   -6      106
+
+TIS 
+                    Index Estimate
+1->2 1->3 2->3 2->4    -7      107
+1->5 4->1              -8      108
+2->1                   -9      109
+2->5                  -10      110
+3->5                  -11      111
+4->5                  -12      112
+
+TSO 
+               Index Estimate
+1->5              -8      108
+1->2 2->3        -13      113
+1->3 2->1 2->4   -14      114
+2->5             -15      115
+3->5             -16      116
+4->1             -17      117
+4->5             -18      118
+
+> isAllFixed(c) # TRUE
+[1] TRUE
+> 
+> ### base, covariate, and path parameters
+> fixed <- c(3, 8, 15, 21, 22)
+> var <- seq(from=20, by=5, length.out=24)^2
+> covConstraint <- c(1, 2, 3, 4, 1, 5, 6, 1, 4, 7, 8, 8, 8, 9, 9, 9, 9, 10, 11, 11)
+> c <- mspathEstimatedCoefficients(permissible,
++                                  params= 101:129,
++                                  baseConstrVec=baseConstraint,
++                                  covVars=covNames,
++                                  constrVec=covConstraint,
++                                  pathVars=pathNames,
++                                  pathConstrVec = pathConstraint,
++                                  fixed=fixed,
++                                  n=100,
++                                  var=var)
+> # selective first, in reverse order
+> print(c, coeff=c("TIS", "intercept"))
+TIS 
+                    Index Estimate Std Err      t Pr(>|t|)
+1->2 1->3 2->3 2->4    18      118      90 1.3111   0.1938
+1->5 4->1              19      119      95 1.2526   0.2142
+2->1                   20      120     100 1.2000   0.2339
+2->5                  -21      121      NA     NA       NA
+3->5                  -22      122      NA     NA       NA
+4->5                   23      123     105 1.1714   0.2451
+
+intercept 
+                    Index Estimate Std Err      t  Pr(>|t|)    
+1->2 1->3 2->3 2->4     1      101      20 5.0500 2.948e-06 ***
+1->5 4->1               2      102      25 4.0800 0.0001101 ***
+2->1                   -3      103      NA     NA        NA    
+2->5                    4      104      30 3.4667 0.0008703 ***
+3->5                    5      105      35 3.0000 0.0036494 ** 
+4->5                    6      106      40 2.6500 0.0097882 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+> 
+> # all but the intercept
+> mycoef <- c(pathNames, covNames)
+> print(c, coeff=mycoef, digits=3)
+TIS 
+                    Index Estimate Std Err    t Pr(>|t|)
+1->2 1->3 2->3 2->4    18      118      90 1.31     0.19
+1->5 4->1              19      119      95 1.25     0.21
+2->1                   20      120     100 1.20     0.23
+2->5                  -21      121      NA   NA       NA
+3->5                  -22      122      NA   NA       NA
+4->5                   23      123     105 1.17     0.25
+
+TSO 
+               Index Estimate Std Err    t Pr(>|t|)
+1->5              19      119      95 1.25     0.21
+1->2 2->3         24      124     110 1.13     0.26
+1->3 2->1 2->4    25      125     115 1.09     0.28
+2->5              26      126     120 1.05     0.30
+3->5              27      127     125 1.02     0.31
+4->1              28      128     130 0.98     0.33
+4->5              29      129     135 0.96     0.34
+
+a 
+               Index Estimate Std Err    t Pr(>|t|)  
+1->2 2->3 3->5     7      107      45 2.38    0.020 *
+1->3              -8      108      NA   NA       NA  
+1->5               9      109      50 2.18    0.032 *
+2->1 4->1         10      110      55 2.00    0.049 *
+2->4              11      111      60 1.85    0.068 .
+2->5              12      112      65 1.72    0.089 .
+4->5              13      113      70 1.61    0.111  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+b 
+                    Index Estimate Std Err    t Pr(>|t|)
+1->2 1->3 1->5         14      114      75 1.52     0.13
+2->1 2->3 2->4 2->5   -15      115      NA   NA       NA
+3->5                   16      116      80 1.45     0.15
+4->1 4->5              17      117      85 1.38     0.17
+
+> 
+> # whole thing
+> print(c)
+intercept 
+                    Index Estimate Std Err      t  Pr(>|t|)    
+1->2 1->3 2->3 2->4     1      101      20 5.0500 2.948e-06 ***
+1->5 4->1               2      102      25 4.0800 0.0001101 ***
+2->1                   -3      103      NA     NA        NA    
+2->5                    4      104      30 3.4667 0.0008703 ***
+3->5                    5      105      35 3.0000 0.0036494 ** 
+4->5                    6      106      40 2.6500 0.0097882 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+a 
+               Index Estimate Std Err      t Pr(>|t|)  
+1->2 2->3 3->5     7      107      45 2.3778  0.01993 *
+1->3              -8      108      NA     NA       NA  
+1->5               9      109      50 2.1800  0.03235 *
+2->1 4->1         10      110      55 2.0000  0.04907 *
+2->4              11      111      60 1.8500  0.06820 .
+2->5              12      112      65 1.7231  0.08894 .
+4->5              13      113      70 1.6143  0.11061  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+b 
+                    Index Estimate Std Err      t Pr(>|t|)
+1->2 1->3 1->5         14      114      75 1.5200   0.1327
+2->1 2->3 2->4 2->5   -15      115      NA     NA       NA
+3->5                   16      116      80 1.4500   0.1512
+4->1 4->5              17      117      85 1.3765   0.1727
+
+TIS 
+                    Index Estimate Std Err      t Pr(>|t|)
+1->2 1->3 2->3 2->4    18      118      90 1.3111   0.1938
+1->5 4->1              19      119      95 1.2526   0.2142
+2->1                   20      120     100 1.2000   0.2339
+2->5                  -21      121      NA     NA       NA
+3->5                  -22      122      NA     NA       NA
+4->5                   23      123     105 1.1714   0.2451
+
+TSO 
+               Index Estimate Std Err      t Pr(>|t|)
+1->5              19      119      95 1.2526   0.2142
+1->2 2->3         24      124     110 1.1273   0.2632
+1->3 2->1 2->4    25      125     115 1.0870   0.2805
+2->5              26      126     120 1.0500   0.2970
+3->5              27      127     125 1.0160   0.3129
+4->1              28      128     130 0.9846   0.3279
+4->5              29      129     135 0.9556   0.3423
+
+> 
+> isAllFixed(c) # FALSE
+[1] FALSE
+> 

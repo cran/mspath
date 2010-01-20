@@ -1,0 +1,443 @@
+
+R version 2.7.1 (2008-06-23)
+Copyright (C) 2008 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(mspath)
+> data(e2, q2, sim2)
+> tol <- 5e-5 # really e-7 since it  percentage
+> 
+> r <- mspath(fib~time, misc=TRUE, ematrix=e2, qmatrix=q2, inits=rep(.5, 9), subject=id,
++              data=sim2, stepnumerator=1, stepdenominator=1, initprobs=c(1.0, 0, 0, 0, 0),
++              do.what=0)
+> nCases(r)
+[1] 335
+> nGoodPaths(r)
+[1] 65325
+> nGoodNodes(r)
+[1] 277358
+> nBadNodes(r)
+[1] 53409
+> nGoodPathNodes(r)
+[1] 909495
+> r0 <- r
+> 
+> # Next tests mirror mspathCEntry_test.cc, except for different data input.
+> # Note that goodNodes, badNodes, goodPathNodes may change depending on implementation
+> 
+>  r <- mspath(fib~time, misc=TRUE, ematrix=e2, qmatrix=q2,
++              inits=c(-1.6, -1.6, -1.2, -2.5, -1.0, -2.0, -1.0, -2.0, -1.0),
++              subject=id,
++              data=sim2, stepnumerator=1, stepdenominator=1, initprobs=c(1.0, 0, 0, 0, 0),
++              do.what=1, fixedpars=seq(9))
+> 
+> nCases(r) == nCases(r0)
+[1] TRUE
+> nCases(r)
+[1] 335
+> nGoodPaths(r) == nGoodPaths(r0)
+[1] TRUE
+> nGoodPaths(r)
+[1] 65325
+> nGoodNodes(r) == nGoodNodes(r0)
+[1] TRUE
+> nGoodNodes(r)
+[1] 277358
+> nBadNodes(r) == nBadNodes(r0)
+[1] TRUE
+> nBadNodes(r)
+[1] 53409
+> nGoodPathNodes(r) == nGoodPathNodes(r0)
+[1] TRUE
+> nGoodPathNodes(r)
+[1] 909495
+> all.equal(minus2loglik(r), 2017.767, tolerance=tol)
+[1] TRUE
+> all.equal(coef(r), c(-1.6, -1.6, -1.2, -2.5, -1.0, -2.0, -1.0, -2.0, -1.0))
+[1] TRUE
+> all.equal(sd(r), rep(0, 9))
+[1] TRUE
+> 
+> # next call also tests handling of optional arguments isexact and control
+>  r <- mspath(fib~time, misc=TRUE, ematrix=e2, qmatrix=q2,
++              inits=c(-1.6, -1.6, -1.2, -2.5, -1.0, -2.0, -1.0, -2.0, -1.0),
++              subject=id,
++              data=sim2, stepnumerator=1, stepdenominator=1, initprobs=c(1.0, 0, 0, 0, 0),
++              do.what=1, fixedpars=seq(9), isexact=TRUE, control=list(fnscale=2000))
+> 
+> nCases(r) == nCases(r0)
+[1] TRUE
+> nGoodPaths(r) < nGoodPaths(r0)
+[1] TRUE
+> nGoodPaths(r)
+[1] 28863
+> nGoodNodes(r) < nGoodNodes(r0)
+[1] TRUE
+> nGoodNodes(r)
+[1] 139169
+> nBadNodes(r)
+[1] 89871
+> nGoodPathNodes(r) < nGoodPathNodes(r0)
+[1] TRUE
+> nGoodPathNodes(r)
+[1] 367243
+> # likelihood differs from previous mspath call
+> all.equal(minus2loglik(r), 2360.929, tolerance=tol)
+[1] TRUE
+> 
+> 
+>                                         # iteration 3
+>  r <- mspath(fib~time, misc=TRUE, ematrix=e2, qmatrix=q2,
++              inits=c(-2.12358, -2.05849, -1.79560, -3.12710,
++                -0.55153, -2.08489, -1.36302, -1.71042, -0.84825),
++              subject=id,
++              data=sim2, stepnumerator=1, stepdenominator=1, initprobs=c(1.0, 0, 0, 0, 0),
++              do.what=1, fixedpars=seq(9))
+> 
+> nCases(r) == nCases(r0)
+[1] TRUE
+> nGoodPaths(r) == nGoodPaths(r0)
+[1] TRUE
+> nGoodNodes(r) == nGoodNodes(r0)
+[1] TRUE
+> nBadNodes(r) == nBadNodes(r0)
+[1] TRUE
+> nGoodPathNodes(r) == nGoodPathNodes(r0)
+[1] TRUE
+> all.equal(minus2loglik(r), 2713.066, tolerance=tol)
+[1] TRUE
+> 
+> # Now test actual estimation
+> # subset data to speed things up
+> d <- mspath.subset(sim2)
+> r <- mspath(fib~time, misc=TRUE, ematrix=e2, qmatrix=q2,
++             inits=c(-1.6, -1.6, -1.2, -2.5, -1.0, -2.0, -1.0, -2.0, -1.0),
++             subject=id,
++             data=d, stepnumerator=1, stepdenominator=1, initprobs=c(1.0, 0, 0, 0, 0),
++             method="BFGS")
+> # I used digits=2 to hide small numerical variations
+> # between systems.  However, some knife edge cases may still flop around
+> # also the likelihood is printed in full precision.
+> #
+> # NOTE: I HAVE NO STRONG CHECK THAT THE VALUES ARE OPTIMAL.
+> # I'm just taking what the routine gives me.
+> 
+> print(r, digits=2)
+Transition Coefficients
+intercept 
+     Index Estimate Std Err    t Pr(>|t|)  
+1->2  1.00     1.89   11.86  0.2     0.87  
+2->3  2.00    -0.38    0.75 -0.5     0.62  
+3->4  3.00     1.31    5.67  0.2     0.82  
+4->5  4.00    -1.33    0.63 -2.1     0.04 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+
+
+Measurement Error Coefficients
+intercept 
+       Index Estimate Std Err    t Pr(>|t|)
+2->1    5.00    14.15 1180.44 0.01      1.0
+3->1    6.00    -1.31    9.13 -0.1      0.9
+3->2    7.00    -5.31   58.81 -0.1      0.9
+4->2    8.00    -0.24    0.42 -0.6      0.6
+4->3    9.00    -0.53    1.15 -0.5      0.6
+
+
+
+187.4711 = -2*log-likehood for 58 id's.
+3565 good paths with 12558 good nodes and 4221 bad nodes. 
+If each path were evaluated separately, there would be 35264 good nodes.
+> rbest <- r
+> 
+> # Following results can be validated with pure R code in src/simulate.
+> # Note they use a single evaluation only, no optimization
+> r <- mspath(fib~time, misc=TRUE, ematrix=e2, qmatrix=q2,
++             inits=c(-1.6, -1.6, -1.2, -2.5, -1.0, -2.0, -1.0, -2.0, -1.0),
++             subject=id,
++             data=d,
++             stepnumerator=1, stepdenominator=1,
++             initprobs=c(1.0, 0, 0, 0, 0),
++             fixed=seq(9),
++             method="BFGS")
+> nCases(r)
+[1] 58
+> nGoodPaths(r)
+[1] 3565
+> nGoodPathNodes(r)
+[1] 35264
+> minus2loglik(rbest) < minus2loglik(r)
+[1] TRUE
+> all.equal(minus2loglik(r), 349.1242, tolerance=tol)
+[1] TRUE
+> 
+> # values near the optimum
+> r <- mspath(fib~time, misc=TRUE, ematrix=e2, qmatrix=q2,
++             inits=c(1.89, -0.38, 1.31, -1.33,
++               14.15, -1.31, -5.31, -0.24, -053),
++             subject=id,
++             data=d,
++             stepnumerator=1, stepdenominator=1,
++             initprobs=c(1.0, 0, 0, 0, 0),
++             fixed=seq(9),
++             method="BFGS")
+> nCases(r)
+[1] 58
+> nGoodPaths(r)
+[1] 3565
+> nGoodPathNodes(r)
+[1] 35264
+> # Note: distinctly worse than the optimum, despite 2 digit agreement of coefficients.
+> all.equal(minus2loglik(r), 221.4708, tolerance=tol)
+[1] TRUE
+> ## end section validated against src/simulate
+> 
+> ######## misc=SIMPLE optimization test with one fixed param
+> r <- mspath(fib~time, misc=SIMPLE, ematrix=e2, qmatrix=q2,
++             inits=c(-1.6, -1.6, -1.2, -2.5, seq(.05, length=5, by=.01)),
++             subject=id,
++             data=d,
++             stepnumerator=1, stepdenominator=1,
++             initprobs=c(1.0, 0, 0, 0, 0),
++             fixed=2,
++             method="BFGS")
+> print(r, digits=2)
+Transition Coefficients
+intercept 
+      Index Estimate Std Err    t Pr(>|t|)
+1->2   1.00    12.60  291.92 0.04      1.0
+2->3  -2.00    -1.60      NA   NA       NA
+3->4   3.00     0.13    0.49  0.3      0.8
+4->5   4.00    -0.12    0.48 -0.3      0.8
+
+
+
+211.9785 = -2*log-likehood for 58 id's.
+3565 good paths with 12558 good nodes and 4221 bad nodes. 
+If each path were evaluated separately, there would be 35264 good nodes.
+> print(r, digits=2, showAll=TRUE) # should display the error terms
+Transition Coefficients
+intercept 
+      Index Estimate Std Err    t Pr(>|t|)
+1->2   1.00    12.60  291.92 0.04      1.0
+2->3  -2.00    -1.60      NA   NA       NA
+3->4   3.00     0.13    0.49  0.3      0.8
+4->5   4.00    -0.12    0.48 -0.3      0.8
+
+
+
+Measurement Error Coefficients
+intercept 
+     Index Estimate
+2->1    -5     0.05
+3->1    -6      0.1
+3->2    -7      0.1
+4->2    -8      0.1
+4->3    -9      0.1
+
+
+
+211.9785 = -2*log-likehood for 58 id's.
+3565 good paths with 12558 good nodes and 4221 bad nodes. 
+If each path were evaluated separately, there would be 35264 good nodes.
+> 
+> # tol is in percent
+> all.equal(coef(r), c(12.60, -1.60, 0.13, -0.12, seq(.05, length=5, by=.01)), tol=1)
+[1] TRUE
+> all.equal(sd(r), c(291.92, 0, 0.49, 0.48, rep(0, 5)), tol=1)
+[1] TRUE
+> 
+> # test reporting of various non-convergence
+> optresults(r)$convergence <- 1
+> r
+WARNING: iteration limit reached
+Transition Coefficients
+intercept 
+         Index  Estimate   Std Err       t Pr(>|t|)
+1->2   1.00000  12.59633 291.92147  0.0431   0.9657
+2->3  -2.00000  -1.60000        NA      NA       NA
+3->4   3.00000   0.13084   0.48594  0.2692   0.7882
+4->5   4.00000  -0.12414   0.48024 -0.2585   0.7965
+
+
+
+211.9785 = -2*log-likehood for 58 id's.
+3565 good paths with 12558 good nodes and 4221 bad nodes. 
+If each path were evaluated separately, there would be 35264 good nodes.
+> 
+> optresults(r)$convergence <- 10
+> print(r, coeff="intercept", digits=2)
+ERROR: degeneracy of Nelder-Mead simplex.
+Transition Coefficients
+intercept 
+      Index Estimate Std Err    t Pr(>|t|)
+1->2   1.00    12.60  291.92 0.04      1.0
+2->3  -2.00    -1.60      NA   NA       NA
+3->4   3.00     0.13    0.49  0.3      0.8
+4->5   4.00    -0.12    0.48 -0.3      0.8
+
+
+
+211.9785 = -2*log-likehood for 58 id's.
+3565 good paths with 12558 good nodes and 4221 bad nodes. 
+If each path were evaluated separately, there would be 35264 good nodes.
+> 
+> optresults(r)$convergence <- 51
+> optresults(r)$message <- "Test warning from L-BFGS-B"
+> print(r, coeff="intercept", digits=2)
+WARNING: Test warning from L-BFGS-B 
+Transition Coefficients
+intercept 
+      Index Estimate Std Err    t Pr(>|t|)
+1->2   1.00    12.60  291.92 0.04      1.0
+2->3  -2.00    -1.60      NA   NA       NA
+3->4   3.00     0.13    0.49  0.3      0.8
+4->5   4.00    -0.12    0.48 -0.3      0.8
+
+
+
+211.9785 = -2*log-likehood for 58 id's.
+3565 good paths with 12558 good nodes and 4221 bad nodes. 
+If each path were evaluated separately, there would be 35264 good nodes.
+> 
+> 
+> optresults(r)$convergence <- 52
+> optresults(r)$message <- "Test error from L-BFGS-B"
+> print(r, coeff="intercept", digits=2)
+ERROR: Test error from L-BFGS-B 
+Transition Coefficients
+intercept 
+      Index Estimate Std Err    t Pr(>|t|)
+1->2   1.00    12.60  291.92 0.04      1.0
+2->3  -2.00    -1.60      NA   NA       NA
+3->4   3.00     0.13    0.49  0.3      0.8
+4->5   4.00    -0.12    0.48 -0.3      0.8
+
+
+
+211.9785 = -2*log-likehood for 58 id's.
+3565 good paths with 12558 good nodes and 4221 bad nodes. 
+If each path were evaluated separately, there would be 35264 good nodes.
+> 
+> ## Check initial and optimal results with src/simulate as check.
+> ## misc=SIMPLE
+> r <- mspath(fib~time, misc=SIMPLE, ematrix=e2, qmatrix=q2,
++             inits=c(-1.6, -1.6, -1.2, -2.5, seq(.05, length=5, by=.01)),
++             subject=id,
++             data=d,
++             stepnumerator=1, stepdenominator=1,
++             initprobs=c(1.0, 0, 0, 0, 0),
++             fixed=seq(9),
++             method="BFGS")
+> nCases(r)
+[1] 58
+> all.equal(minus2loglik(r), 341.7841, tolerance=tol)
+[1] TRUE
+> 
+> r <- mspath(fib~time, misc=SIMPLE, ematrix=e2, qmatrix=q2,
++             inits=c(12.60, -1.60, 0.13, -0.12, seq(.05, length=5, by=.01)),
++             subject=id,
++             data=d,
++             stepnumerator=1, stepdenominator=1,
++             initprobs=c(1.0, 0, 0, 0, 0),
++             fixed=seq(9))
+> nGoodPaths(r)
+[1] 3565
+> all.equal(minus2loglik(r), 211.9785, tolerance=tol)
+[1] TRUE
+> ## end validatable portion
+> 
+> ## Manager_test.cc::manager2 test replication
+> 
+> # Data_samples.cc::pData1c
+> data1c <- data.frame(id=c(4, 4, 5, 10, 10, 10),
++                     time=c(2.3, 2.4, 2, 0, 0.1, 0.25),
++                     fib=1+c(0, 1, 0, 0, 1, 2),
++                     x1=c( .3, .3, 0, -1, -2, -1),
++                     x2=c( 0, 2.1, 2.2, 2.3, 2.4, 2.5))
+> 
+> # pModel2(.025) =  Model(pSpec2(), pSpec3(), pathComputers0(initialTime))
+> # pSpec2
+> spec2 <- matrix(c(0, 1, 1,
++                   1, 0, 1,
++                   0, 0, 0), byrow=TRUE, nrow=3)
+> # makeSumLinearProduct2
+> # (makeConstantProduct3(&n));
+> #   pIntercept3
+> spec2.inits.intercept <- c( 0.9, -10.0, 0.2, -7.0)
+> 
+> 
+> # (makeDataProduct2(&n));
+> #   pSlope4
+> spec2.inits.slope <- c(10.1,  5.3,  8.1, -2.3,
++                      2.4, -5.0, -2.1,  4.0)
+> 
+> # (makePathProduct3(&n));
+> #  picks out the first path-dependent var
+> #  pSlope5
+> spec2.inits.path <- c(-11, 8.4, 5.5, 15.3)
+> 
+> # pSpec3
+> spec3 <- matrix(c( 0, 1, 0,
++                   1, 0, 0,
++                   0, 0, 0), byrow=TRUE, nrow=3)
+> # makeConstantProduct4
+> #  pIntercept4
+> spec3.inits <- c(-1.8, -0.8)
+> 
+> 
+>  r <- mspath(fib~time, misc=TRUE, ematrix=spec3, qmatrix=spec2,
++              covariates= ~ x1+x2,
++              # misccovariates aren't used, so no need to constrain
++              pathvars= c("TIS"),
++              pathoffset= .025,
++              inits=c(spec2.inits.intercept, spec2.inits.slope,
++                spec2.inits.path, spec3.inits),
++              subject=id,
++              data=data1c, stepnumerator=1, stepdenominator=20, initprobs=c(1.0, 0, 0, 0, 0),
++              do.what=1, fixedpars=seq(4*4+2),
++              isexact=TRUE)
+Warning message:
+In mspath.check.times(time, subject) : Subject 5 only has one observation
+> all.equal(minus2loglik(r), -2*log( 0.1848857*2.667778e-08 ), tolerance=1e-5)
+[1] TRUE
+> nCases(r)
+[1] 3
+> nGoodPaths(r)
+[1] 21
+> 
+> # as above, without exact observation times of death
+>  r <- mspath(fib~time, misc=TRUE, ematrix=spec3, qmatrix=spec2,
++              covariates= ~ x1+x2,
++              # misccovariates aren't used, so no need to constrain
++              pathvars= c("TIS"),
++              pathoffset= .025,
++              inits=c(spec2.inits.intercept, spec2.inits.slope,
++                spec2.inits.path, spec3.inits),
++              subject=id,
++              data=data1c, stepnumerator=1, stepdenominator=20, initprobs=c(1.0, 0, 0, 0, 0),
++              do.what=1, fixedpars=seq(4*4+2))
+Warning message:
+In mspath.check.times(time, subject) : Subject 5 only has one observation
+> 
+> 
+> all.equal(minus2loglik(r), -2*log( 0.1848857*7.066139e-06 ), tolerance=1e-5)
+[1] TRUE
+> nCases(r)
+[1] 3
+> nGoodPaths(r)
+[1] 33
+> 

@@ -1,0 +1,6 @@
+The main body of code is licensed under the GNU Public License,
+verison 3 or later at your option.
+
+The code under the boost directory is licensed under the BSD license.
+If you have Boost 1.33 or greater, code from your installation of
+boost will be used instead (with the same license).

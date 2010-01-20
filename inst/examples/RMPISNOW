@@ -1,0 +1,17 @@
+#! /bin/bash
+
+# R_SNOW_LIB nonempty -> default non-homogeneous cluster
+# which is not really what I want
+# If you have SNOW installed in a standard location, you will not
+# need the next 2 lines.
+R_SNOW_LIB=${HOME}/lib
+R_LIBS=${R_LIBS}:${R_SNOW_LIB}; export R_LIBS
+
+# alternately, you could setup a symlink from .Rprofile
+R_PROFILE=${PWD}/RMPISNOWprofile; export R_PROFILE
+
+if [[ $LAMRANK == "0" ]]; then
+    R --no-save --no-restore $*
+else
+    R --no-save --no-restore $* > snow.$LAMRANK 2>&1
+fi

@@ -1,0 +1,486 @@
+# This file is an edited log of an R session illustrating how to use
+# the simulate components in this directory to check likelihood
+# calculations.
+# The particular calculations to check are those in 
+# src/test/Manager_test.cc in the managerCutoff unit test.
+# Note that the setup violates the assumption of the R code
+# that the final state is observed exactly, so we need to
+# pull out the answer we need from the internals, rather than
+# accepted the printed summary.
+
+# See mspsim.R just before the TruePaths class definition
+# for the assumption.  Quoting from the comments
+# preceding that definition:
+#   I assume no measurement error for absorbing state
+#   Assume absorbing state == highest numbered state
+
+
+R version 2.7.1 (2008-06-23)
+Copyright (C) 2008 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> options(STERM='iESS', editor='emacsclient')
+# next line loads most of the basic system plus the simulation code in
+# this directory.
+# I previously ran make -f Makefile.full lib in the src/ directory
+# to generate the mspath.so file that loadmspath uses.
+> source("loadmspath.R")
+Creating a new generic function for "print" in ".GlobalEnv"
+Creating a new generic function for "coef" in ".GlobalEnv"
+Creating a new generic function for "sd" in ".GlobalEnv"
+NOTE: arguments in definition for validity method for class 'Specification' changed from (spec) to (object)
+NOTE: arguments in definition for validity method for class 'SimpleSpecification' changed from (spec) to (object)
+NOTE: arguments in definition for validity method for class 'ErrorModel' changed from (self) to (object)
+NOTE: arguments in definition for validity method for class 'Observations' changed from (self) to (object)
+NOTE: arguments in definition for validity method for class 'TruePaths' changed from (self) to (object)
+Creating a new generic function for "summary" in ".GlobalEnv"
+Warning messages:
+1: In .completeClassSlots(ClassDef, where) :
+  undefined slot classes in definition of "mspath": transCoef(class "mspathCoefficients"), calc(class "mspathAbstractCalculator")
+2: In .completeClassSlots(ClassDef, where) :
+  undefined slot classes in definition of "mspathFull": errCoef(class "mspathCoefficients"), transCoef(class "mspathCoefficients"), calc(class "mspathAbstractCalculator")
+> fakeDat <- data.frame(id=rep(1, 3), fib=c(0, 1, 1), time=c(1, 2, 3))
+> fakeDat
+  id fib time
+1  1   0    1
+2  1   1    2
+3  1   1    3
+> e3 <- matrix(c(0, 1, 0, 0, 0, 1, 0, 0, 0), byrow=TRUE, ncol=3)
+> e3
+     [,1] [,2] [,3]
+[1,]    0    1    0
+[2,]    0    0    1
+[3,]    0    0    0
+# Oops: should have been q3, the transition matrix
+> q3<-e3
+> e3 <- matrix(c(0, 1, 1, 0, 0, 1, 0, 1, 0), byrow=TRUE, ncol=3)
+> e3
+     [,1] [,2] [,3]
+[1,]    0    1    1
+[2,]    0    0    1
+[3,]    0    1    0
+> r <- mspath(fib~time, misc=TRUE, ematrix=e3, qmatrix=q3, inits=c(-1.8, -.8, .9, -10, .2, -7), subject=id, data=fakeDat,
++ stepdenominator=2, initprobs=c(1, 0, 0), fixed=seq(6), calcFactory=fakeCalculator)
+Error in mspath.check.state(nrow(qmatrix), state) : 
+  State vector contains elements not in 1, 2, 3
+> fakeDat$state <- fakeDat$state+1
+> r <- mspath(fib~time, misc=TRUE, ematrix=e3, qmatrix=q3, inits=c(-1.8, -.8, .9, -10, .2, -7), subject=id, data=fakeDat,
++ stepdenominator=2, initprobs=c(1, 0, 0), fixed=seq(6), calcFactory=fakeCalculator)
+Error in mspath.check.state(nrow(qmatrix), state) : 
+  State vector contains elements not in 1, 2, 3
+> fakeDat
+  id fib time state
+1  1   0    1  <NA>
+2  1   1    2  <NA>
+3  1   1    3  <NA>
+Warning message:
+In format.data.frame(x, digits = digits, na.encode = FALSE) :
+  corrupt data frame: columns will be truncated or padded with NAs
+> fakeDat$fib <- fakeDat$fib+1
+> r <- mspath(fib~time, misc=TRUE, ematrix=e3, qmatrix=q3, inits=c(-1.8, -.8, .9, -10, .2, -7), subject=id, data=fakeDat,
++ stepdenominator=2, initprobs=c(1, 0, 0), fixed=seq(6), calcFactory=fakeCalculator)
+> r
+Optimization does not seem to have been tried
+2.116585 = -2*log-likehood for 1 id's.
+5 good paths with 0 good nodes and 0 bad nodes. 
+If each path were evaluated separately, there would be 25 good nodes.
+# 5 paths is too low.  Debug to find out what's going on.
+# Ultimately realize the R code assumptions were violated.
+> e3
+     [,1] [,2] [,3]
+[1,]    0    1    1
+[2,]    0    0    1
+[3,]    0    1    0
+> q3
+     [,1] [,2] [,3]
+[1,]    0    1    0
+[2,]    0    0    1
+[3,]    0    0    0
+> trace(makeTruePaths)
+> r <- mspath(fib~time, misc=TRUE, ematrix=e3, qmatrix=q3, inits=c(-1.8, -.8, .9, -10, .2, -7), subject=id, data=fakeDat,
++ stepdenominator=2, initprobs=c(1, 0, 0), fixed=seq(6), calcFactory=fakeCalculator)
+trace: makeTruePaths(obs, model, args$stepnumerator, args$stepdenominator)
+> trace(makeTruePaths, browser)
+[1] "makeTruePaths"
+> r <- mspath(fib~time, misc=TRUE, ematrix=e3, qmatrix=q3, inits=c(-1.8, -.8, .9, -10, .2, -7), subject=id, data=fakeDat,
++ stepdenominator=2, initprobs=c(1, 0, 0), fixed=seq(6), calcFactory=fakeCalculator)
+Tracing makeTruePaths(obs, model, args$stepnumerator, args$stepdenominator) on entry 
+Called from: eval(expr, envir, enclos)
+Browse[1]> obs
+An object of class “Observations”
+Slot "time":
+[1] 1 2 3
+
+Slot "path":
+[1] 1 2 2
+
+Slot "covs":
+     [,1] [,2] [,3]
+[1,]    1    1    1
+
+Slot "subjectid":
+[1] 1
+
+Browse[1]> stepnumerator
+[1] 1
+Browse[1]> stepdenominator
+[1] 2
+Browse[1]> range(time(obs))
+[1] 1 3
+Browse[1]> n
+debug: {
+    i <- round(stepdenominator * range(time(obs))/stepnumerator)
+    t <- stepnumerator * seq(from = i[1], to = i[2])/stepdenominator
+    TruePaths(t, model, obs)
+}
+attr(,"srcfile")
+/home/ross/UCSF/peter/R/mspath/src/simulate/fakeCalc.R 
+Browse[1]> i
+Error: object "i" not found
+Browse[1]> n
+debug: i <- round(stepdenominator * range(time(obs))/stepnumerator)
+Browse[1]> i
+Error: object "i" not found
+Browse[1]> n
+debug: t <- stepnumerator * seq(from = i[1], to = i[2])/stepdenominator
+Browse[1]> i
+[1] 2 6
+Browse[1]> n
+debug: TruePaths(t, model, obs)
+Browse[1]> t
+[1] 1.0 1.5 2.0 2.5 3.0
+Browse[1]> TruePaths(t, model, obs)
+An object of class “TruePaths”
+Slot "time":
+[1] 1.0 1.5 2.0 2.5 3.0
+
+Slot "paths":
+      [,1] [,2] [,3] [,4] [,5]
+ [1,]    1    1    1    1    1
+ [2,]    1    1    1    1    2
+ [3,]    1    1    1    2    2
+ [4,]    1    1    1    2    3
+ [5,]    1    1    2    2    2
+ [6,]    1    1    2    2    3
+ [7,]    1    1    2    3    3
+ [8,]    1    2    2    2    2
+ [9,]    1    2    2    2    3
+[10,]    1    2    2    3    3
+[11,]    1    2    3    3    3
+
+# That was the 11 paths I expected.
+Slot "obsState":
+[1] 1 0 2 0 2
+
+Slot "indexObs":
+[1] 1 1 2 2 3
+
+Slot "obs":
+An object of class “Observations”
+Slot "time":
+[1] 1 2 3
+
+Slot "path":
+[1] 1 2 2
+
+Slot "covs":
+     [,1] [,2] [,3]
+[1,]    1    1    1
+
+Slot "subjectid":
+[1] 1
+
+
+Slot "first":
+ [1] Inf Inf Inf   5 Inf   5   4 Inf   5   4   3
+
+Slot "indexApprox":
+[1] Inf
+
+Slot "indexExact":
+[1] Inf
+
+Browse[1]> n
+> untrace(makeTruePaths)
+> trace(innerCompute, browser)
+[1] "innerCompute"
+> r <- mspath(fib~time, misc=TRUE, ematrix=e3, qmatrix=q3, inits=c(-1.8, -.8, .9, -10, .2, -7), subject=id, data=fakeDat,
++ stepdenominator=2, initprobs=c(1, 0, 0), fixed=seq(6), calcFactory=fakeCalculator)
+Tracing innerCompute(calc) on entry 
+Called from: eval(expr, envir, enclos)
+Browse[1]> n
+debug: {
+    args <- calc@args
+    subject <- args$subject
+    pars <- args$params
+    active <- activeCases(calc)
+    iActive <- rep(TRUE, length(subject))
+    if (length(active) > 0) 
+        iActive <- subject %in% active
+    model <- buildModel(calc, args$params)
+    ncovs <- args$ncovs
+    nmisccovs <- args$nmisccovs
+    obsIt <- obsMaker(subject[iActive], args$time[iActive], args$state[iActive], 
+        pullCovs(args$covvec, iActive, ncovs), ncovs, pullCovs(args$misccovvec, 
+            iActive, nmisccovs), nmisccovs)
+    obs <- obsIt()
+    extract <- function(r) {
+        if (args$isexact)
+          isGood <- isGoodExact(r@pathMaker@truePaths)
+        else
+          isGood <- isGoodApprox(r@pathMaker@truePaths)
+        list(ll=sum(r@likelihoods$likelihood[isGood]), nGoodPath=sum(isGood))
+      }
+
+    details <- matrix(nrow = 0, ncol = 7)
+    while (!is.null(obs)) {
+        tp <- makeTruePaths(obs, model, args$stepnumerator, args$stepdenominator)
+        pm <- CompletePathMaker(tp, args$pathoffset, normalHistory(args$pathvars))
+        r <- evaluatePaths(pm, model)
+        r2 <- extract(r)
+        t <- matrix(c(r2$ll, 1, r2$nGoodPath, rep(0, 2), r2$nGoodPath * 
+            ncol(pm@truePaths@paths), obs@subjectid), nrow = 1)
+        details <- rbind(details, matrix(c(r2$ll, 1, r2$nGoodPath, 
+            rep(0, 2), r2$nGoodPath * ncol(pm@truePaths@paths), 
+            obs@subjectid), nrow = 1))
+        obs <- obsIt()
+    }
+    details
+}
+attr(,"srcfile")
+/home/ross/UCSF/peter/R/mspath/src/simulate/fakeCalc.R 
+Browse[1]> n
+debug: args <- calc@args
+Browse[1]> n
+debug: subject <- args$subject
+Browse[1]> 
+debug: pars <- args$params
+Browse[1]> 
+debug: active <- activeCases(calc)
+Browse[1]> 
+debug: iActive <- rep(TRUE, length(subject))
+Browse[1]> 
+debug: if (length(active) > 0) iActive <- subject %in% active
+Browse[1]> 
+debug: model <- buildModel(calc, args$params)
+Browse[1]> 
+debug: ncovs <- args$ncovs
+Browse[1]> 
+debug: nmisccovs <- args$nmisccovs
+Browse[1]> ncovs
+[1] 0
+Browse[1]> n
+debug: obsIt <- obsMaker(subject[iActive], args$time[iActive], args$state[iActive], 
+    pullCovs(args$covvec, iActive, ncovs), ncovs, pullCovs(args$misccovvec, 
+        iActive, nmisccovs), nmisccovs)
+Browse[1]> n
+debug: obs <- obsIt()
+Browse[1]> n
+debug: extract <- function(r) {
+    if (args$isexact)
+      isGood <- isGoodExact(r@pathMaker@truePaths)
+    else
+      isGood <- isGoodApprox(r@pathMaker@truePaths)
+    list(ll=sum(r@likelihoods$likelihood[isGood]), nGoodPath=sum(isGood))
+  }
+
+Browse[1]> args$isexact
+[1] 0
+Browse[1]> n
+debug: details <- matrix(nrow = 0, ncol = 7)
+Browse[1]> isGood
+Error: object "isGood" not found
+Browse[1]> n
+debug: while (!is.null(obs)) {
+    tp <- makeTruePaths(obs, model, args$stepnumerator, args$stepdenominator)
+    pm <- CompletePathMaker(tp, args$pathoffset, normalHistory(args$pathvars))
+    r <- evaluatePaths(pm, model)
+    r2 <- extract(r)
+    t <- matrix(c(r2$ll, 1, r2$nGoodPath, rep(0, 2), r2$nGoodPath * 
+        ncol(pm@truePaths@paths), obs@subjectid), nrow = 1)
+    details <- rbind(details, matrix(c(r2$ll, 1, r2$nGoodPath, 
+        rep(0, 2), r2$nGoodPath * ncol(pm@truePaths@paths), obs@subjectid), 
+        nrow = 1))
+    obs <- obsIt()
+}
+Browse[1]> n
+debug: !is.null(obs)
+Browse[1]> n
+debug: tp <- makeTruePaths(obs, model, args$stepnumerator, args$stepdenominator)
+Browse[1]> n
+debug: pm <- CompletePathMaker(tp, args$pathoffset, normalHistory(args$pathvars))
+Browse[1]> tp
+An object of class “TruePaths”
+Slot "time":
+[1] 1.0 1.5 2.0 2.5 3.0
+
+Slot "paths":
+      [,1] [,2] [,3] [,4] [,5]
+ [1,]    1    1    1    1    1
+ [2,]    1    1    1    1    2
+ [3,]    1    1    1    2    2
+ [4,]    1    1    1    2    3
+ [5,]    1    1    2    2    2
+ [6,]    1    1    2    2    3
+ [7,]    1    1    2    3    3
+ [8,]    1    2    2    2    2
+ [9,]    1    2    2    2    3
+[10,]    1    2    2    3    3
+[11,]    1    2    3    3    3
+
+Slot "obsState":
+[1] 1 0 2 0 2
+
+Slot "indexObs":
+[1] 1 1 2 2 3
+
+Slot "obs":
+An object of class “Observations”
+Slot "time":
+[1] 1 2 3
+
+Slot "path":
+[1] 1 2 2
+
+Slot "covs":
+     [,1] [,2] [,3]
+[1,]    1    1    1
+
+Slot "subjectid":
+[1] 1
+
+
+Slot "first":
+ [1] Inf Inf Inf   5 Inf   5   4 Inf   5   4   3
+
+Slot "indexApprox":
+[1] Inf
+
+Slot "indexExact":
+[1] Inf
+
+Browse[1]> n
+debug: r <- evaluatePaths(pm, model)
+Browse[1]> pm
+An object of class “CompletePathMaker”
+Slot "timeOffset":
+[1] 0
+
+Slot "truePaths":
+An object of class “TruePaths”
+Slot "time":
+[1] 1.0 1.5 2.0 2.5 3.0
+
+Slot "paths":
+      [,1] [,2] [,3] [,4] [,5]
+ [1,]    1    1    1    1    1
+ [2,]    1    1    1    1    2
+ [3,]    1    1    1    2    2
+ [4,]    1    1    1    2    3
+ [5,]    1    1    2    2    2
+ [6,]    1    1    2    2    3
+ [7,]    1    1    2    3    3
+ [8,]    1    2    2    2    2
+ [9,]    1    2    2    2    3
+[10,]    1    2    2    3    3
+[11,]    1    2    3    3    3
+
+Slot "obsState":
+[1] 1 0 2 0 2
+
+Slot "indexObs":
+[1] 1 1 2 2 3
+
+Slot "obs":
+An object of class “Observations”
+Slot "time":
+[1] 1 2 3
+
+Slot "path":
+[1] 1 2 2
+
+Slot "covs":
+     [,1] [,2] [,3]
+[1,]    1    1    1
+
+Slot "subjectid":
+[1] 1
+
+
+Slot "first":
+ [1] Inf Inf Inf   5 Inf   5   4 Inf   5   4   3
+
+Slot "indexApprox":
+[1] Inf
+
+Slot "indexExact":
+[1] Inf
+
+
+Slot "history":
+character(0)
+
+Browse[1]> n
+debug: r2 <- extract(r)
+Browse[1]> r
+0.3470479 5 approx paths
+ 0.3470479 5 exact paths
+0.3471161 11 paths
+Browse[1]> isGoodApprox(r@pathMaker@truePaths)
+ [1]  TRUE  TRUE  TRUE FALSE  TRUE FALSE FALSE  TRUE FALSE FALSE FALSE
+Browse[1]> r@pathMaker@truePaths@first
+ [1] Inf Inf Inf   5 Inf   5   4 Inf   5   4   3
+Browse[1]> r@pathMaker@truePaths@indexApprox
+[1] Inf
+Browse[1]> r@pathMaker@truePaths@indexExact
+[1] Inf
+Browse[1]> # code assumed absorbing states were exactly measured.  Not so in this case.
+Browse[1]> # just use all of them.
+Browse[1]> class(r)
+[1] "PathResults"
+attr(,"package")
+[1] ".GlobalEnv"
+Browse[1]> r@likelihoods
+     likelihood P.1 P.2 P.3 P.4 P.5
+1  2.741049e-01   1   1   1   1   1
+2  2.868972e-02   1   1   1   1   2
+3  2.306730e-02   1   1   1   2   2
+4  2.097641e-05   1   1   1   2   3
+5  1.174375e-02   1   1   2   2   2
+6  1.067926e-05   1   1   2   2   3
+7  1.547776e-05   1   1   2   3   3
+8  9.442284e-03   1   2   2   2   2
+9  8.586409e-06   1   2   2   2   3
+10 1.244453e-05   1   2   2   3   3
+11 3.650191e-08   1   2   3   3   3
+# Next comes the number I want for the likelihood
+Browse[1]> sum(r@likelihoods$likelihood)
+[1] 0.3471161
+Browse[1]> q
+function (save = "default", status = 0, runLast = TRUE) 
+.Internal(quit(save, status, runLast))
+<environment: namespace:base>
+Browse[1]> 
+debug: t <- matrix(c(r2$ll, 1, r2$nGoodPath, rep(0, 2), r2$nGoodPath * 
+    ncol(pm@truePaths@paths), obs@subjectid), nrow = 1)
+Browse[1]> c
+debug: details
+Browse[1]> c
+> q()
+Save workspace image? [y/n/c]: n
+
+Process R:2 finished at Fri Mar 20 10:32:13 2009

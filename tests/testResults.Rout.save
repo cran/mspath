@@ -1,0 +1,435 @@
+
+R version 2.4.0 Patched (2006-11-25 r39997)
+Copyright (C) 2006 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # Test the mspath class object returned by the calculation
+> #
+> # Test Coverage:
+> # constructors? I just use new(); only other constructor is main mspath() fn
+> # unestimated (simple mspath class)  I should get this if all are fixed.
+> # standard case: variable transition, fixed MISC, constraints, convergent
+> # same, convergence failure (both neg eigen and opt reported non-convergence)
+> # both params estimated (see test1 for convergent case)
+> # both fixed
+> # facilities: show, print, print selected coefficients, print options,
+> #  print(showAll)
+> #  results: optresults, minus2loglik, nCases, nGoodPaths, nGoodNodes,
+> #           nBadNodes, nGoodPathNodes
+> # Note print is only method reimplemented for mspathFull
+> 
+> 
+> # Code borrowed from test2
+> library(mspath)
+> 
+> qmatrix <- matrix(c(FALSE, TRUE, TRUE, FALSE,
++                     TRUE, FALSE, TRUE, FALSE,
++                     FALSE, FALSE, FALSE, TRUE,
++                     FALSE, TRUE, FALSE, FALSE),
++                   nrow=4,
++                   byrow=TRUE)
+> ematrix <- matrix(c(FALSE, TRUE, FALSE, FALSE,
++                     TRUE, FALSE, FALSE,  TRUE,
++                     FALSE, TRUE, FALSE,  TRUE,
++                     TRUE, FALSE, FALSE, FALSE),
++                   byrow=TRUE,
++                   nrow = 4)
+> times <- c(1, 2, 5, 7,   101, 104, 106)
+> states <- c(1, 3, 3, 2,  1, 4, 4)
+> cov1 <- c(1.94, -2.46,  0.09,  2.80,   -0.60, -6.11, -1.15)
+> cov2 <- c(-4.23,  0.23, -4.22,  1.53,  3.63,  0.84,  2.42)
+> cov3 <- c(3.51,  1.93,  5.30,  1.03,   0.56, -3.32, -0.50) # apparently unused
+> inits <- c( -.4, 1.1, .3, # intercept
++            -1.1, .3, -1.1, 1.1, 0.4, # covariates
++            0.4, -0.9,  -0.59, -0.8, 2.15, 0.5, 1.0, 2.8, # paths
++            # misclass
++            .04, .28, .01, .02, .1 # intercept
++            )
+> 
+> r <- mspath(states~times, qmatrix, misc=SIMPLE, ematrix,
++             inits, subject=c(rep(1,4), rep(23, 3)),
++             covariates = ~ cov1 + cov2,
++             constraint = list(
++               cov1=c(1, 1, 2, 1, 1, 2),
++ 	      cov2=c(3, 5, 3, 4, 5, 3)
++               ),
++             qconstraint = c(1, 2, 3, 3, 2, 1),
++             econstraint = c(1, 2, 3, 2, 4, 5),
++             pathvars =  c("LN(TIS)", "TIS", "TSO"),
++             pathoffset = 1,
++             pathconstraint = list(
++               "LN(TIS)" = c(1, 1, 1, 2, 2, 2),
++               TIS = c(3, 4, 5, 5, 4, 3),
++               TSO = c(6, 8, 7, 7, 6, 8)),
++ 
++             fixedpars = seq(along=inits))
+> ## end borrowing
+> class(r)
+[1] "mspathFull"
+attr(,"package")
+[1] "mspath"
+> 
+> r
+Optimization does not seem to have been tried
+27.63515 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+> 
+> # should be same as above, which uses show()
+> print(r)
+Optimization does not seem to have been tried
+27.63515 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+> 
+> # with fixed coefficients and formatting option
+> # showAll should not matter for this case, which is not an estimate
+> print(r, showAll=TRUE, digits=2)
+Optimization does not seem to have been tried
+Transition Coefficients
+intercept 
+          Index Value
+1->2 4->2     1  -0.4
+1->3 3->4     2   1.1
+2->1 2->3     3   0.3
+
+cov1 
+                    Index Value
+1->2 1->3 2->3 3->4     4  -1.1
+2->1 4->2               5   0.3
+
+cov2 
+               Index Value
+1->2 2->1 4->2     6  -1.1
+2->3               7   1.1
+1->3 3->4          8   0.4
+
+LN(TIS) 
+               Index Value
+1->2 1->3 2->1     9   0.4
+2->3 3->4 4->2    10  -0.9
+
+TIS 
+          Index Value
+1->2 4->2    11  -0.6
+1->3 3->4    12  -0.8
+2->1 2->3    13   2.1
+
+TSO 
+          Index Value
+1->2 3->4    14   0.5
+2->1 2->3    15   1.0
+1->3 4->2    16   2.8
+
+
+
+Measurement Error Coefficients
+intercept 
+          Index Value
+1->2         17  0.04
+2->1 3->2    18   0.3
+2->4         19  0.01
+3->4         20  0.02
+4->1         21   0.1
+
+
+
+27.63515 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+> 
+> # print subset of coefficients
+> # should print nothing with all fixed
+> print(r, digits=2, coeff=c("TIS", "intercept"))
+Optimization does not seem to have been tried
+27.63515 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+>       
+> # some of the values below may vary if algorithms change
+> # without it's being an error.  nBadNodes might change
+> # with smarter enumeration of the paths.  nGoodNodes might change.
+> # The others should be fixed.
+> nCases(r) # 2
+[1] 2
+> nGoodPaths(r)  # should be 78
+[1] 78
+> nGoodNodes(r) # just accepted the values that came out for next 3
+[1] 155
+> nBadNodes(r)  # bad Nodes may change without that being an error
+[1] 31
+> nGoodPathNodes(r)
+[1] 472
+> tol <- 1e-7
+> all.equal(minus2loglik(r), -2*log(0.0001066036 * 0.009361202 ), tolerance=tol)
+[1] TRUE
+> 
+> 
+> # Try to get optimization results when there are none.
+> optresults(r)
+list()
+> 
+> 
+> ############# estimated coefficients
+> # hessian is not positive definite
+> r <- mspath(states~times, qmatrix, misc=SIMPLE, ematrix,
++             inits, subject=c(rep(1,4), rep(23, 3)),
++             covariates = ~ cov1 + cov2,
++             constraint = list(
++               cov1=c(1, 1, 2, 1, 1, 2),
++ 	      cov2=c(3, 5, 3, 4, 5, 3)
++               ),
++             qconstraint = c(1, 2, 3, 3, 2, 1),
++             econstraint = c(1, 2, 3, 2, 4, 5),
++             pathvars =  c("LN(TIS)", "TIS", "TSO"),
++             pathoffset = 1,
++             pathconstraint = list(
++               "LN(TIS)" = c(1, 1, 1, 2, 2, 2),
++               TIS = c(3, 4, 5, 5, 4, 3),
++               TSO = c(6, 8, 7, 7, 6, 8)),
++             # my sample doesn't have enough variation
++             # to estimate many of the params
++             fixedpars = c(2, 3, 5, 7, 9, 10, 12, 13, 14, 15))
+> r
+Transition Coefficients
+ERROR: HESSIAN WAS NOT POSITIVE-DEFINITE!!
+intercept 
+          Index Estimate
+1->2 4->2     1  -10.875
+1->3 3->4    -2    1.100
+2->1 2->3    -3    0.300
+
+cov1 
+                    Index Estimate
+1->2 1->3 2->3 3->4     4   1.4542
+2->1 4->2              -5   0.3000
+
+cov2 
+               Index Estimate
+1->2 2->1 4->2     6 -71.0534
+2->3              -7   1.1000
+1->3 3->4          8   0.0594
+
+LN(TIS) 
+               Index Estimate
+1->2 1->3 2->1    -9      0.4
+2->3 3->4 4->2   -10     -0.9
+
+TIS 
+          Index Estimate
+1->2 4->2    11  -28.499
+1->3 3->4   -12   -0.800
+2->1 2->3   -13    2.150
+
+TSO 
+          Index Estimate
+1->2 3->4   -14    0.500
+2->1 2->3   -15    1.000
+1->3 4->2    16   27.065
+
+
+
+7.13849 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+> 
+> # next should show the fixed error coefficients
+> print(r, showAll=TRUE, digits=2)
+Transition Coefficients
+ERROR: HESSIAN WAS NOT POSITIVE-DEFINITE!!
+intercept 
+          Index Estimate
+1->2 4->2     1    -10.9
+1->3 3->4    -2      1.1
+2->1 2->3    -3      0.3
+
+cov1 
+                    Index Estimate
+1->2 1->3 2->3 3->4     4      1.5
+2->1 4->2              -5      0.3
+
+cov2 
+               Index Estimate
+1->2 2->1 4->2     6    -71.1
+2->3              -7      1.1
+1->3 3->4          8      0.1
+
+LN(TIS) 
+               Index Estimate
+1->2 1->3 2->1    -9      0.4
+2->3 3->4 4->2   -10     -0.9
+
+TIS 
+          Index Estimate
+1->2 4->2    11    -28.5
+1->3 3->4   -12     -0.8
+2->1 2->3   -13      2.1
+
+TSO 
+          Index Estimate
+1->2 3->4   -14      0.5
+2->1 2->3   -15      1.0
+1->3 4->2    16     27.1
+
+
+
+Measurement Error Coefficients
+intercept 
+          Index Estimate
+1->2        -17     0.04
+2->1 3->2   -18      0.3
+2->4        -19     0.01
+3->4        -20     0.02
+4->1        -21      0.1
+
+
+
+7.13849 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+> 
+> names(optresults(r))
+[1] "par"         "value"       "counts"      "convergence" "message"    
+[6] "hessian"    
+> 
+> nCases(r) # 2
+[1] 2
+> nGoodPaths(r)  # should be 78
+[1] 78
+> nGoodNodes(r) # just accepted the values that came out for next 3
+[1] 155
+> nBadNodes(r)  # bad Nodes may change without that being an error
+[1] 31
+> nGoodPathNodes(r)
+[1] 472
+> 
+> # test reporting of various non-convergence
+> optresults(r)$convergence <- 1
+> r
+WARNING: iteration limit reached
+Transition Coefficients
+ERROR: HESSIAN WAS NOT POSITIVE-DEFINITE!!
+intercept 
+          Index Estimate
+1->2 4->2     1  -10.875
+1->3 3->4    -2    1.100
+2->1 2->3    -3    0.300
+
+cov1 
+                    Index Estimate
+1->2 1->3 2->3 3->4     4   1.4542
+2->1 4->2              -5   0.3000
+
+cov2 
+               Index Estimate
+1->2 2->1 4->2     6 -71.0534
+2->3              -7   1.1000
+1->3 3->4          8   0.0594
+
+LN(TIS) 
+               Index Estimate
+1->2 1->3 2->1    -9      0.4
+2->3 3->4 4->2   -10     -0.9
+
+TIS 
+          Index Estimate
+1->2 4->2    11  -28.499
+1->3 3->4   -12   -0.800
+2->1 2->3   -13    2.150
+
+TSO 
+          Index Estimate
+1->2 3->4   -14    0.500
+2->1 2->3   -15    1.000
+1->3 4->2    16   27.065
+
+
+
+7.13849 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+> 
+> optresults(r)$convergence <- 10
+> print(r, coeff="intercept", digits=2)
+ERROR: degeneracy of Nelder-Mead simplex.
+Transition Coefficients
+ERROR: HESSIAN WAS NOT POSITIVE-DEFINITE!!
+intercept 
+          Index Estimate
+1->2 4->2     1    -10.9
+1->3 3->4    -2      1.1
+2->1 2->3    -3      0.3
+
+
+
+7.13849 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+> 
+> optresults(r)$convergence <- 51
+> optresults(r)$message <- "Test warning from L-BFGS-B"
+> print(r, coeff="intercept", digits=2)
+WARNING: Test warning from L-BFGS-B 
+Transition Coefficients
+ERROR: HESSIAN WAS NOT POSITIVE-DEFINITE!!
+intercept 
+          Index Estimate
+1->2 4->2     1    -10.9
+1->3 3->4    -2      1.1
+2->1 2->3    -3      0.3
+
+
+
+7.13849 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+> 
+> 
+> optresults(r)$convergence <- 52
+> optresults(r)$message <- "Test error from L-BFGS-B"
+> print(r, coeff="intercept", digits=2)
+ERROR: Test error from L-BFGS-B 
+Transition Coefficients
+ERROR: HESSIAN WAS NOT POSITIVE-DEFINITE!!
+intercept 
+          Index Estimate
+1->2 4->2     1    -10.9
+1->3 3->4    -2      1.1
+2->1 2->3    -3      0.3
+
+
+
+7.13849 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+> 
+> optresults(r)$convergence <- 997  # mystery value
+> print(r, coeff="intercept", digits=2)
+ERROR: Unrecognized convergence failure with code 997 
+See ?optim for clues.
+Transition Coefficients
+ERROR: HESSIAN WAS NOT POSITIVE-DEFINITE!!
+intercept 
+          Index Estimate
+1->2 4->2     1    -10.9
+1->3 3->4    -2      1.1
+2->1 2->3    -3      0.3
+
+
+
+7.13849 = -2*log-likehood for 2 id's.
+78 good paths with 155 good nodes and 31 bad nodes. 
+If each path were evaluated separately, there would be 472 good nodes.
+> 

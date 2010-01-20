@@ -1,0 +1,11 @@
+#! /bin/bash
+#  invoke with mpirun C RMPIInteractive
+# Should leave master process ready for keyboard input.
+# This is NOT FOR SNOW.
+# Put R commands to execute in .Rprofile.
+
+if [[ $LAMRANK == "0" ]]; then
+    R --no-save --no-restore $*
+else
+    R --no-save --no-restore $* > rmpi.$LAMRANK 2>&1
+fi

@@ -1,0 +1,54 @@
+This directory, mspath/src/simulate, contains files that are not
+intended for production use.
+
+To test the program requires some independent method of verifying the
+results and getting simulated data on which to run tests.  In this
+directory I reimplement the basic likelihood calculations purely in
+R.  The result is slow and has limited functionality compared to the
+main package, but it does permit very detailed inspection of paths and
+intermediate results.
+
+The directory also includes some sample data and logs of some tests.
+In some cases these were used to generate expected values for test
+runs of R code (mspath/tests) and C code (mspath/src/test); however,
+it may not be in sync with the current versions of those tests.
+
+fakeCalc.R provides a drop-in replacement for the real calculators.
+   Use it by specifying the calc=fakeCalc argument to mspath.
+   Limitations:
+      * no covariate effects on misclassification rates;
+      * no duplicate observations within a step (same as real
+        calculators);
+      * absorbing state must be highest numbered state;
+      * states must be numbered consecutively from 1 (same as real
+        calculators);
+      * path counts are only upper bounds
+      * some counts are missing entirely.
+      * probably others.
+  It uses classes defined in ...
+
+mspsim.R provides analogues to many of the lower-level C++ classes
+   upon which calculation and simulation are based.
+
+makeData.R makes simulated data and runs the real calculator against
+   it.  Also provides a function to strip out huge amounts of
+   redundant data.
+
+mspsimData.R  Tests a variety of data and models.  You can evaluate
+   this and then print the result variables.  The input data mimics
+   that used in some of the real tests for mspath.
+
+test02.R Tests whether covariates are lagged.  
+   Basis of tests/test6.R
+
+For the logs, note that they were from ESS sessions that often pulled
+in new or revised code (e.g., the files above) without leaving a trace
+of this activity in the log.
+
+Manager_test.log  like managerCutoff C++ unit test.
+   Illustrates expected calling pattern of functions in mspsim.R.
+
+rlog01 other tests, some using Data1c.
+
+SimResults.gnumeric Gnumeric spreadsheet of expected results.
+

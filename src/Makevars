@@ -1,0 +1,8 @@
+# here's hoping this is parsed by gnu make
+ifeq (yes, no)
+# to pick up the boost/ subdirectory
+PKG_CXXFLAGS=-I .
+endif
+
+# for testing
+#PKG_CXXFLAGS+= -g -O0

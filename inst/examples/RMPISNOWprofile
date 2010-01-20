@@ -1,0 +1,33 @@
+# This is a modified version of the file distributed with SNOW
+# myupdate() will reload the source files on all nodes.
+library(Rmpi)
+library(rsprng)
+library(snow)
+.First.sys()
+sys.load.image(".RData",TRUE)
+source("loadmspath.R")
+
+.MPIrun <- function() 
+{
+    if (mpi.comm.rank(0) > 0){
+	sink(file="/dev/null")
+        slaveLoop(makeMPImaster())
+        mpi.quit()
+    }
+    else {
+        makeMPIcluster()
+	myupdate <<- function() {
+           source("loadmspath.R")
+	   invisible(clusterEvalQ(getMPIcluster(), source("loadmspath.R")))
+	 }
+	 clusterSetupRNG(getMPIcluster(), "SPRNG")
+        .Last <<- function(){
+            cl <- getMPIcluster()
+            if (! is.null(cl))
+                stopCluster(cl)
+            mpi.quit()
+        }
+    }
+}
+
+.MPIrun()
