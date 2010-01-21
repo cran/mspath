@@ -5,7 +5,7 @@
 \usage{expit(x)
 }
 \arguments{
-  \item{x}{ }
+  \item{x}{A non-negative vector }
 }
 \value{
   \eqn{exp(x) / (1 + exp(x))}

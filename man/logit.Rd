@@ -5,7 +5,7 @@
 \usage{logit(x)
 }
 \arguments{
-  \item{x}{ }
+  \item{x}{A real vector }
 }
 \value{
   \eqn{log(x / (1 - x))}

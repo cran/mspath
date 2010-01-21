@@ -1,3 +1,7 @@
+2010-01-21 Ross Boylan <ross@biostat.ucsf.edu>
+	* Add argument description to {expit,logit}.Rd
+	* 0.9-7 release
+	
 2010-01-20 Ross Boylan <ross@biostat.ucsf.edu>
 	* fix sequencing issues in definitions of generic functions.
 	Create R/allGenerics.R with help of R/Rgeneric.py.
