@@ -435,30 +435,38 @@ misclassifications.
   \code{\link{checkpoint}}.
   }
 \references{
-  Boylan, R.D. 2009. Multi-state Path-Dependent Models.  Working paper.
-  University of California, San Francisco.
+  Boylan, R.D. 2010 Multi-state Path-Dependent Models.  Working paper.
+  University of California, San Francisco.  Available as
+  doc/mspath-program.* within this package.
+
+  Bacchetti, P., Boylan, R.D., Terrault, N.A.,  Monto, A. and Berenguer,
+  Marina.  Forthcoming Non-Markov multistate modeling
+  using time-varying covariates, with application to progression of
+  liver fibrosis due to hepatitis C following liver
+  transplant. \emph{The International Journal of Biostatistics}.
+
   
   Jackson, C.H., Sharples, L.D., Thompson, S.G. and Duffy, S.W. and
-  Couto, E.  Multi-state Markov models for disease progression with
-  classification error. \emph{The Statistician}, 52(2): 193--209 (2003)
+  Couto, E.  2003 Multi-state Markov models for disease progression with
+  classification error. \emph{The Statistician}, \bold{52}(2), 193--209.
     
-  Jackson, C.H. and Sharples, L.D. Hidden Markov models for the
+  Jackson, C.H. and Sharples, L.D. 2002 Hidden Markov models for the
   onset and progresison of bronchiolitis obliterans syndrome in lung
-  transplant recipients \emph{Statistics in Medicine}, 21(1): 113--128
-  (2002).
+  transplant recipients \emph{Statistics in Medicine}, \bold{21}(1),
+  113--128.
     
-  Kay, R.  A Markov model for analysing cancer markers and disease
-  states in survival studies.  \emph{Biometrics} (1986) 42: 855--865.
+  Kay, R.  1986 A Markov model for analysing cancer markers and disease
+  states in survival studies.  \emph{Biometrics} \bold{42}, 855--865.
   
-  Gentleman, R.C., Lawless, J.F., Lindsey, J.C. and Yan, P.  Multi-state
-  Markov models for analysing incomplete disease history data with
-  illustrations for HIV disease.  \emph{Statistics in Medicine} (1994) 13(3):
-  805--821.
+  Gentleman, R.C., Lawless, J.F., Lindsey, J.C. and Yan, P.  1994
+  Multi-state Markov models for analysing incomplete disease history
+  data with illustrations for HIV disease.  \emph{Statistics in
+  Medicine} \bold{13}(3), 805--821.
 
-  Satten, G.A. and Longini, I.M.  Markov chains with measurement error:
-  estimating the 'true' course of a marker of the progression of human
-  immunodeficiency virus disease (with discussion) \emph{Applied
-    Statistics} 45(3): 275-309 (1996)
+  Satten, G.A. and Longini, I.M.  1996 Markov chains with measurement
+  error: estimating the 'true' course of a marker of the progression of
+  human immunodeficiency virus disease (with discussion) \emph{Applied
+  Statistics} \bold{45}(3), 275-309.
 }
 
 \seealso{\code{\link{master}}, \code{\link{checkpoint}},

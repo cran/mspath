@@ -1,3 +1,13 @@
+2010-01-22 Ross Boylan <ross@biostat.ucsf.edu>
+	* Add src/Makefile.win so MS Windows uses BOOST.  This should
+	enable successful auto-build on Windows.
+	* Add comments to R/Rgeneric.py to make suitable for separate
+	(1.0) release.
+	* Clarify in man/mspath.Rd that program documentation is part of
+	package, and refer to forthcoming paper.  Reformat sources in
+	recommended R style (http://developer.r-project.org/Rds.html).
+	* 0.9-8 release
+	
 2010-01-21 Ross Boylan <ross@biostat.ucsf.edu>
 	* Add argument description to {expit,logit}.Rd
 	* 0.9-7 release
