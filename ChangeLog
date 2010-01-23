@@ -1,3 +1,7 @@
+2010-01-23 Ross Boylan <ross@biostat.ucsf.edu>
+	* Rename Makefile.win to Makevars.win
+	* 0.9-9 release
+	
 2010-01-22 Ross Boylan <ross@biostat.ucsf.edu>
 	* Add src/Makefile.win so MS Windows uses BOOST.  This should
 	enable successful auto-build on Windows.
